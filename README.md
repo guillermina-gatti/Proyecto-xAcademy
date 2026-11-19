@@ -431,3 +431,19 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 2. `GET /api/players/export.csv?gender=female` tiene 13 líneas (12 jugadores y la cabecera), igual que `meta.total` del listado con el mismo filtro más una.
 3. `?page=2` y `?gender=otro` responden 400.
 4. `npm run test:e2e` pasa completo.
+
+### Estructura del frontend y sesión en el cliente
+
+**Decisión:** el frontend usa rutas con un guard, un interceptor HTTP para el token y un servicio de autenticación. El token se guarda en `localStorage`. La URL de la API vive en `src/environments/environment.ts`. La pantalla de login usa reactive forms, y el diseño (variables de color y tipografía) está centralizado en `src/styles.css`.
+
+**Alternativas consideradas:** guardar el token en una cookie HttpOnly. Descartado: requiere que el backend emita cookies y maneje CSRF, y el backend ya devuelve el token en el cuerpo de la respuesta.
+
+**Motivo:** el backend usa JWT en el header `Authorization`. Con un interceptor, todas las llamadas a la API lo envían sin que cada componente lo sepa. Un 401 de la API cierra la sesión y lleva a `/login`.
+
+**Restricción de puerto:** el backend solo acepta CORS desde `http://localhost:4200`. El frontend tiene que correr en ese puerto (`npm start -- --port 4200`). Si Angular usa otro puerto, el login falla con "No se pudo conectar con la API" aunque la API esté levantada.
+
+**Cómo se verifica:**
+1. Sin sesión, `/players` redirige a `/login`.
+2. Un login correcto guarda el token en `localStorage` y navega a `/players`.
+3. Un 401 de la API cierra la sesión.
+4. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.

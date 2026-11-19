@@ -1,7 +1,8 @@
 // src/app/services/player.ts
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Player {
   id: number;
@@ -20,9 +21,8 @@ export interface Player {
   providedIn: 'root',
 })
 export class PlayerService {
-  private baseUrl = 'http://localhost:3000/api/players';
-
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiUrl}/api/players`;
 
   getPlayer(id: number): Observable<Player> {
     return this.http.get<Player>(`${this.baseUrl}/${id}`);

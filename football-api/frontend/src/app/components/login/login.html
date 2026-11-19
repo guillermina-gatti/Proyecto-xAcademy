@@ -1,0 +1,64 @@
+<section class="login">
+  <div class="hero">
+    <p class="kicker">[ 01 ] · Acceso al listado</p>
+    <h1>
+      Gestión de <span class="highlight">jugadores</span>
+    </h1>
+    <p class="lede">con skills de cada versión.</p>
+    <p class="desc">
+      Accedé para ver el listado, filtrar por club o posición y revisar el
+      radar de habilidades de cada jugador. Sin sesión iniciada, la API no
+      devuelve información.
+    </p>
+
+    <dl class="facts">
+      <div>
+        <dt>Versiones</dt>
+        <dd>2015 – 2023</dd>
+      </div>
+      <div>
+        <dt>Géneros</dt>
+        <dd>Ambos</dd>
+      </div>
+      <div>
+        <dt>Seguridad</dt>
+        <dd>JWT</dd>
+      </div>
+    </dl>
+  </div>
+
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <p class="kicker">[ Acceso ]</p>
+    <h2>Iniciar sesión</h2>
+
+    @if (errorMessage()) {
+      <div class="alert" role="alert">{{ errorMessage() }}</div>
+    }
+
+    <label class="field">
+      <span>Usuario</span>
+      <input type="text" formControlName="username" autocomplete="username" />
+      @if (form.controls.username.touched && form.controls.username.invalid) {
+        <small class="error">El usuario es obligatorio.</small>
+      }
+    </label>
+
+    <label class="field">
+      <span>Clave</span>
+      <input
+        type="password"
+        formControlName="password"
+        autocomplete="current-password"
+      />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <small class="error">La clave es obligatoria.</small>
+      }
+    </label>
+
+    <button type="submit" class="btn-primary" [disabled]="submitting()">
+      {{ submitting() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+
+    <p class="hint">Se valida igual en front y back.</p>
+  </form>
+</section>

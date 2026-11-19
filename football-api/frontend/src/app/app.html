@@ -1,3 +1,18 @@
+<header class="topbar">
+  <a class="brand" routerLink="/players">
+    <span class="brand-mark">XA</span>
+    <span>FIFA Players · XAcademy</span>
+  </a>
 
-<h1>Welcome to the FE</h1>
-<app-player></app-player>
+  @if (auth.loggedIn()) {
+    <nav class="topnav">
+      <a routerLink="/players" routerLinkActive="active">Listado</a>
+      <button type="button" class="link-btn" (click)="logout()">Salir</button>
+    </nav>
+    <span class="session-badge">sesión · JWT</span>
+  }
+</header>
+
+<main>
+  <router-outlet />
+</main>
