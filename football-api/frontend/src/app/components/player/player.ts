@@ -1,12 +1,12 @@
 // src/app/components/player/player.component.ts
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { PlayerService, Player } from '../../services/player/player';
 
 @Component({
   selector: 'app-player',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   providers: [PlayerService],
   templateUrl: './player.html',
   styleUrls: ['./player.css'],
