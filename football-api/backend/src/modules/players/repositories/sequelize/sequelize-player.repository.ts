@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import { PlayerModel } from './player.model'; // Sequelize model
-import { IPlayerRepository } from '../../interfaces/player-repository.interface';
+import {
+  IPlayerRepository,
+  PlayerListParams,
+  PlayerListResult,
+} from '../../interfaces/player-repository.interface';
 import { Player } from '../../entities/player.entity';
 
 @Injectable()
@@ -22,6 +27,46 @@ export class SequelizePlayerRepository implements IPlayerRepository {
       return undefined;
     }
     return this.mapToEntity(model);
+  }
+
+  async findPaginated(params: PlayerListParams): Promise<PlayerListResult> {
+    const { rows, count } = await this.playerModel.findAndCountAll({
+      where: this.buildWhere(params),
+      // Orden estable: sin esto, dos paginas pueden repetir o perder jugadores.
+      order: [['id', 'ASC']],
+      limit: params.limit,
+      offset: (params.page - 1) * params.limit,
+    });
+    return { rows: rows.map((x) => this.mapToEntity(x)), total: count };
+  }
+
+  private buildWhere(params: PlayerListParams): WhereOptions<PlayerModel> {
+    const conditions: WhereOptions<PlayerModel>[] = [];
+
+    if (params.name) {
+      conditions.push({ longName: { [Op.like]: `%${params.name}%` } });
+    }
+    if (params.club) {
+      conditions.push({ clubName: { [Op.like]: `%${params.club}%` } });
+    }
+    if (params.position) {
+      conditions.push({
+        playerPositions: { [Op.like]: `%${params.position}%` },
+      });
+    }
+    if (params.nationality) {
+      conditions.push({
+        nationalityName: { [Op.like]: `%${params.nationality}%` },
+      });
+    }
+    if (params.gender) {
+      conditions.push({ gender: params.gender });
+    }
+    if (params.fifaVersion !== undefined) {
+      conditions.push({ fifaVersion: params.fifaVersion });
+    }
+
+    return conditions.length > 0 ? { [Op.and]: conditions } : {};
   }
 
   private mapToEntity(model: PlayerModel): Player {

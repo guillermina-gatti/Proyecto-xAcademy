@@ -280,6 +280,7 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 **Motivo:** `player_id` del CSV de FIFA identifica al jugador a lo largo de todas las ediciones. El número de la URL es ese mismo identificador.
 
 **Cómo se verifica:** `SELECT fifa_player_id, fifa_version, gender FROM players WHERE id = 1;` devuelve `158023`. El backfill de la migración falla si queda algún jugador sin `fifa_player_id`.
+
 ### Identidad única de cada fila e índices de filtros
 
 **Decisión:** la combinación `(fifa_player_id, fifa_version, gender)` es única. Una misma fila no puede repetirse para el mismo jugador, edición y género. Además se crean índices sobre `long_name`, `club_name` y `nationality_name`, que son los campos que filtra el listado. La migración busca duplicados antes de crear la clave única y falla con un mensaje claro si los hay.
@@ -308,3 +309,17 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 3. Tras importar el femenino, `SELECT COUNT(*) FROM players WHERE gender = 'female';` devuelve 4.131.
 4. Repetir las dos importaciones no cambia esos conteos.
 5. `SELECT id, fifa_version FROM players WHERE fifa_player_id = 158023;` devuelve varias ediciones de Messi.
+
+### Paginación y filtros del listado
+
+**Decisión:** `GET /api/players` pagina por offset (`page` y `limit`) y responde `{ data, meta }`. Los filtros `name`, `club`, `position` y `nationality` son búsquedas parciales sin distinguir mayúsculas. `gender` y `fifaVersion` son coincidencia exacta. Los resultados se ordenan por `id` para que páginas consecutivas no repitan jugadores.
+
+**Alternativas consideradas:** paginación por cursor (descartada: más compleja y el listado no necesita navegación en tiempo real); límite sin máximo (descartado: una petición podía devolver miles de filas).
+
+**Motivo:** offset es suficiente para el volumen de datos del proyecto, y la respuesta es fácil de consumir desde Angular. El máximo de 100 por página protege la API.
+
+**Cómo se verifica:**
+1. `GET /api/players?page=1&limit=5` devuelve 5 jugadores y `meta.total` 32 con los fixtures cargados.
+2. Páginas consecutivas no repiten ids.
+3. `page=0`, `limit=abc` y `limit=1000` devuelven 400.
+4. `npm run test:e2e` pasa.
