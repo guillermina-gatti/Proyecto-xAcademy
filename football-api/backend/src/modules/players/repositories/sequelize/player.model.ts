@@ -329,4 +329,3 @@ export class PlayerModel extends Model<PlayerModel> {
   @Column({ field: 'player_traits', type: DataType.STRING, allowNull: true })
   declare playerTraits?: string;
 }
-

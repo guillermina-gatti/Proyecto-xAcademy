@@ -1,6 +1,8 @@
-**Guillermina Gatti**
-
 # Santex Academy - FootballAPI
+
+**Guillermina Gatti** · Challenge XAcademy DEV 2026
+
+[![CI](https://github.com/guillermina-gatti/Proyecto-xAcademy/actions/workflows/ci.yml/badge.svg)](https://github.com/guillermina-gatti/Proyecto-xAcademy/actions/workflows/ci.yml)
 
 Aplicación web para gestionar jugadores de FIFA, de ambos géneros.
 
@@ -199,3 +201,29 @@ Para verificarlo:
 1. Ejecutar `curl -i http://localhost:3000/api/players/1` y confirmar `speed: 93`, `shooting: 89`, `dribbling: 96` y `passing: 86`.
 2. Ejecutar `curl -i http://localhost:3000/api/players/999999` y confirmar 404.
 3. Ejecutar `npm run migrate` dentro del contenedor del backend y confirmar que termina sin errores.
+
+### Un solo ORM: Sequelize
+
+**Decisión:** Sequelize es el único ORM del backend. Se eliminan TypeORM, `@nestjs/typeorm` y el código que no se usaba.
+
+**Alternativas consideradas:** mantener TypeORM junto a Sequelize. Descartado: dos ORMs sin uso aumentan las dependencias y no cumplen la consigna, que pide un ORM.
+
+**Motivo:** la consigna pide un ORM (ejemplo Sequelize). El código de TypeORM no se ejecutaba.
+
+**Cómo se verifica:**
+1. `Get-ChildItem src -Recurse -File | Select-String -Pattern "typeorm"` dentro de `football-api\backend` no devuelve resultados.
+2. `npm run build` termina sin errores.
+3. `curl -i http://localhost:3000/api/players/1` responde 200 y `curl -i http://localhost:3000/api/players/999999` responde 404.
+
+### Tests de integración contra MySQL real
+
+**Decisión:** los tests e2e usan la base MySQL real, sin mocks, tanto en local como en GitHub Actions. El CI usa MySQL 9.7 y carga `football-api/docker/db/init.sql` al arrancar.
+
+**Alternativas consideradas:** mockear el repositorio. Descartado: un mock no detecta errores de SQL ni de mapeo de Sequelize.
+
+**Motivo:** la API depende de la base. Probar contra la base real detecta errores de conexión, consulta y datos.
+
+**Cómo se verifica:**
+1. En `football-api\backend`, `npm run test:e2e` pasa con MySQL levantado.
+2. El workflow `CI` pasa en verde en la pestaña Actions de GitHub.
+3. Prueba de falla: un error introducido a propósito hace fallar el CI, y al revertirlo vuelve a pasar.

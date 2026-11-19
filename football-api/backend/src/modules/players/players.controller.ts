@@ -20,7 +20,7 @@ export class PlayersController {
     @Param('id', ParseIntPipe) id: number,
   ): Promise<PlayerDto | undefined> {
     const player = await this.playersService.getPlayerById(id);
-    console.log(`Fetching player  ${player}`);
+    console.log(`Fetching player ${id}`);
     if (!player) {
       throw new NotFoundException(`Player with ID ${id} not found.`);
     }

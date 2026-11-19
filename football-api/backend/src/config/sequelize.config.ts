@@ -1,7 +1,7 @@
 // src/config/sequelize.config.ts
 import { SequelizeModuleOptions } from '@nestjs/sequelize';
 import * as dotenv from 'dotenv';
-import { PlayerModel } from 'src/modules/players/repositories/sequelize/player.model';
+import { PlayerModel } from '../modules/players/repositories/sequelize/player.model';
 
 dotenv.config(); // carga el archivo .env si aún no lo hizo
 
