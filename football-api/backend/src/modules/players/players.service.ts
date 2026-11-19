@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   IPlayerRepository,
   PlayerListParams,
@@ -6,6 +6,8 @@ import {
 import { Player } from './entities/player.entity';
 import { PlayerDto } from './dto/player.dto';
 import { PlayerListResponse } from './dto/player-list.response';
+import { CreatePlayerDto } from './dto/create-player.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto';
 
 @Injectable()
 export class PlayersService {
@@ -29,5 +31,19 @@ export class PlayersService {
         totalPages: Math.ceil(total / params.limit),
       },
     };
+  }
+
+  async createPlayer(data: CreatePlayerDto): Promise<Player> {
+    // El servidor asigna el fifa_player_id: 900001 y los siguientes.
+    const fifaPlayerId = await this.playerRepository.nextUserFifaPlayerId();
+    return this.playerRepository.create(data, fifaPlayerId);
+  }
+
+  async updatePlayer(id: number, data: UpdatePlayerDto): Promise<Player> {
+    const player = await this.playerRepository.update(id, data);
+    if (!player) {
+      throw new NotFoundException(`Player with ID ${id} not found.`);
+    }
+    return player;
   }
 }

@@ -44,10 +44,10 @@ export class PlayerModel extends Model<PlayerModel> {
   declare playerPositions: string;
 
   @Column({ field: 'club_name', type: DataType.STRING, allowNull: true })
-  declare clubName?: string;
+  declare clubName: string | null;
 
   @Column({ field: 'nationality_name', type: DataType.STRING, allowNull: true })
-  declare nationalityName?: string;
+  declare nationalityName: string | null;
 
   @Column(DataType.INTEGER)
   declare overall: number;

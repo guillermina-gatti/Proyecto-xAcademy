@@ -323,3 +323,20 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 2. Páginas consecutivas no repiten ids.
 3. `page=0`, `limit=abc` y `limit=1000` devuelven 400.
 4. `npm run test:e2e` pasa.
+
+### Alta, edición y validaciones de jugadores
+
+**Decisión:** `GET /api/players/:id` devuelve el detalle del jugador con los campos principales (identificación, versión, género, calificación, potencial, edad, valor, salario, altura, peso, pie, skills principales). `POST /api/players` crea un jugador propio: `fifa_version` queda en `0` y `fifa_player_id` toma el siguiente valor desde `900001`. `PATCH /api/players/:id` edita de forma parcial: solo cambia los campos enviados. El género no se edita después del alta. Las validaciones están en class-validator con un `ValidationPipe` global que rechaza campos desconocidos (`forbidNonWhitelisted`) con 400.
+
+**Alternativas consideradas:** `PUT` con reemplazo completo (descartado: obliga a reenviar todo el jugador para cambiar un campo); devolver los ~90 columnas del registro en el detalle (descartado por ahora: los sub-atributos detallados quedan para una mejora posterior, el radar usa solo los seis skills principales); permitir editar el género (descartado: no lo pide la consigna y no aporta al mínimo).
+
+**Motivo:** PATCH coincide con la consigna de "modificar la información" sin obligar a reenviar todo. Los rangos 0 a 99 son los de FIFA. Las pruebas corren con `--runInBand` porque los POST insertan filas y el listado cuenta 32 jugadores con los fixtures.
+
+**Límite conocido:** dos altas simultáneas pueden pedir el mismo `fifa_player_id` y una de ellas fallar con 500. Para el alcance del challenge se acepta; la solución sería un reintento o una transacción con bloqueo.
+
+**Cómo se verifica:**
+1. `GET /api/players/1` devuelve `fifaPlayerId` 158023 y `gender` male.
+2. `POST /api/players` con nombre y skills responde 201 con `fifaVersion` 0 y `fifaPlayerId` desde 900001.
+3. Un `POST` con skill 100, nombre vacío o género fuera de la lista responde 400.
+4. `PATCH` cambia solo lo enviado y responde 200; `PATCH` a un id inexistente responde 404; un campo desconocido responde 400.
+5. `npm run test:e2e` pasa completo.

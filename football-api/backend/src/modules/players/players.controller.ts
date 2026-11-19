@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -6,13 +7,16 @@ import {
   NotFoundException,
   Param,
   ParseIntPipe,
+  Patch,
+  Post,
   Query,
-  ValidationPipe,
 } from '@nestjs/common';
 import { PlayersService } from './players.service';
-import { PlayerDto } from './dto/player.dto';
+import { Player } from './entities/player.entity';
 import { ListPlayersQueryDto } from './dto/list-players.query';
 import { PlayerListResponse } from './dto/player-list.response';
+import { CreatePlayerDto } from './dto/create-player.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto';
 
 @Controller('api/players')
 export class PlayersController {
@@ -21,29 +25,33 @@ export class PlayersController {
   @Get()
   @HttpCode(HttpStatus.OK)
   listPlayers(
-    @Query(
-      new ValidationPipe({
-        transform: true,
-        whitelist: true,
-        forbidNonWhitelisted: true,
-      }),
-    )
-    query: ListPlayersQueryDto,
+    @Query() query: ListPlayersQueryDto,
   ): Promise<PlayerListResponse> {
     return this.playersService.getPlayers(query);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async getPlayerById(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<PlayerDto | undefined> {
+  async getPlayerById(@Param('id', ParseIntPipe) id: number): Promise<Player> {
     const player = await this.playersService.getPlayerById(id);
-    console.log(`Fetching player ${id}`);
     if (!player) {
       throw new NotFoundException(`Player with ID ${id} not found.`);
     }
+    return player;
+  }
 
-    return new PlayerDto(player);
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  createPlayer(@Body() body: CreatePlayerDto): Promise<Player> {
+    return this.playersService.createPlayer(body);
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  updatePlayer(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdatePlayerDto,
+  ): Promise<Player> {
+    return this.playersService.updatePlayer(id, body);
   }
 }

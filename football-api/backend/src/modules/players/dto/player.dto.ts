@@ -1,3 +1,6 @@
+import { Player } from '../entities/player.entity';
+
+// Forma del jugador en el listado (no cambia respecto de commit 4).
 export class PlayerDto {
   id: number;
   name: string;
@@ -10,7 +13,16 @@ export class PlayerDto {
   dribbling: number;
   passing: number;
 
-  constructor(partial: Partial<PlayerDto>) {
-    Object.assign(this, partial);
+  constructor(player: Player) {
+    this.id = player.id;
+    this.name = player.name;
+    this.club = player.club;
+    this.position = player.position;
+    this.nationality = player.nationality;
+    this.rating = player.rating;
+    this.speed = player.speed;
+    this.shooting = player.shooting;
+    this.dribbling = player.dribbling;
+    this.passing = player.passing;
   }
 }
