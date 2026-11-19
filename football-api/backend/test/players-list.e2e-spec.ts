@@ -71,15 +71,18 @@ describe('Players list (e2e)', () => {
   });
 
   it('filtra por genero', async () => {
-    const female = (await list('?gender=female&limit=100')).body as PlayerListBody;
+    const female = (await list('?gender=female&limit=100'))
+      .body as PlayerListBody;
     const male = (await list('?gender=male&limit=100')).body as PlayerListBody;
     expect(female.meta.total).toBe(12);
     expect(male.meta.total).toBe(20);
   });
 
   it('filtra por version de FIFA', async () => {
-    const v23 = (await list('?fifaVersion=23&limit=100')).body as PlayerListBody;
-    const v15 = (await list('?fifaVersion=15&limit=100')).body as PlayerListBody;
+    const v23 = (await list('?fifaVersion=23&limit=100'))
+      .body as PlayerListBody;
+    const v15 = (await list('?fifaVersion=15&limit=100'))
+      .body as PlayerListBody;
     expect(v23.meta.total).toBe(12);
     expect(v15.meta.total).toBe(20);
   });
@@ -101,16 +104,21 @@ describe('Players list (e2e)', () => {
   });
 
   it('filtra por club', async () => {
-    const res = (await list('?club=barcelona&limit=100')).body as PlayerListBody;
+    const res = (await list('?club=barcelona&limit=100'))
+      .body as PlayerListBody;
     expect(res.meta.total).toBeGreaterThanOrEqual(1);
-    res.data.forEach((p) => expect(p.club.toLowerCase()).toContain('barcelona'));
+    res.data.forEach((p) =>
+      expect(p.club.toLowerCase()).toContain('barcelona'),
+    );
   });
 
   it('filtra por nacionalidad', async () => {
     const res = (await list('?nationality=argentina&limit=100'))
       .body as PlayerListBody;
     expect(res.meta.total).toBeGreaterThanOrEqual(1);
-    res.data.forEach((p) => expect(p.nationality.toLowerCase()).toContain('argentina'));
+    res.data.forEach((p) =>
+      expect(p.nationality.toLowerCase()).toContain('argentina'),
+    );
   });
 
   it('un filtro sin resultados responde 200 con data vacio', () => {
