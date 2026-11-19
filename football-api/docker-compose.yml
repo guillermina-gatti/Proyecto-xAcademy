@@ -13,7 +13,13 @@ services:
       - "3306:3306" # Make sure it is the same port as DB_PORT in your .env file'
     volumes:
       - db_data:/var/lib/mysql
-      - ./docker/db:/docker-entrypoint-initdb.d 
+      - ./docker/db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
   backend:
     build:
@@ -21,7 +27,8 @@ services:
       dockerfile: Dockerfile
     container_name: santex_academy_backend
     depends_on:
-      - mysql_db
+      mysql_db:
+        condition: service_healthy
     env_file:
       - .env
     environment:
