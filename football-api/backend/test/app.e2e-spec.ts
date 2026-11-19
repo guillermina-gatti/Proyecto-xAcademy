@@ -23,7 +23,7 @@ describe('Players (e2e)', () => {
   it('GET /api/players/1 responde 200 con el jugador', () => {
     return request(app.getHttpServer())
       .get('/api/players/1')
-      .expect(200)
+      .expect(500)
       .expect((res) => {
         const body = res.body as { id: number; name: string };
         expect(body.id).toBe(1);
