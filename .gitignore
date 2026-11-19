@@ -9,6 +9,10 @@
 data/
 *.csv
 
+# Dumps SQL de referencia de FIFA (muy grandes). No ignorar *.sql en general:
+# docker/db/init.sql es el seed que todavía usa el proyecto.
+fifa_*.sql
+
 # Dependencias, compilados y registros de errores generados automaticamente.
 node_modules/
 dist/
