@@ -1,0 +1,23 @@
+# Define que archivos y carpetas debe ignorar Git para no subirlos al repositorio.
+
+# Secretos: variables de entorno y claves privadas (si se sube el archivo de ejemplo).
+.env
+.env.*
+!.env.sample
+
+# Datos: archivos pesados que no deben guardarse en el historial.
+data/
+*.csv
+
+# Dependencias, compilados y registros de errores generados automaticamente.
+node_modules/
+dist/
+build/
+coverage/
+.angular/
+*.log
+
+# Archivos basura del sistema operativo y configuraciones locales del editor.
+.DS_Store
+Thumbs.db
+.idea/

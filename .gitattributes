@@ -1,0 +1,8 @@
+# Configura como Git guarda y lee los archivos para evitar conflictos entre Windows y Linux.
+
+# Estandariza los saltos de linea a formato Linux/Mac (LF) en todos los archivos de texto.
+* text=auto eol=lf
+
+# Marca imagenes e iconos como archivos binarios para que Git no los modifique ni los corrompa.
+*.png binary
+*.ico binary

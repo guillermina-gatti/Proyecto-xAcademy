@@ -1,0 +1,9 @@
+// backend/.sequelizerc
+// Le dice a sequelize-cli donde estan la configuracion y las migraciones.
+// Va en JavaScript porque la CLI no lee TypeScript.
+const path = require('path');
+
+module.exports = {
+    config: path.resolve('config', 'config.js'),
+    'migrations-path': path.resolve('migrations'),
+};
