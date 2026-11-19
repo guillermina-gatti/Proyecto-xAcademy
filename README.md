@@ -447,3 +447,17 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 2. Un login correcto guarda el token en `localStorage` y navega a `/players`.
 3. Un 401 de la API cierra la sesión.
 4. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.
+
+### Listado de jugadores en el frontend
+
+**Decisión:** `/players` muestra el listado con filtros (nombre, club, posición, nacionalidad, género y versión), paginación de 20 en 20 y descarga CSV. Los filtros y la página viven en la URL, así que recargar o compartir el link conserva la búsqueda.
+
+**Alternativas consideradas:** descargar el CSV con un `<a href>` directo. Descartado: el navegador no envía el header `Authorization`, así que la API respondería 401. La descarga se hace con `HttpClient` como `blob` y se guarda desde el cliente.
+
+**Motivo:** los filtros en la URL permiten volver atrás y compartir búsquedas, y el blob mantiene la autenticación en todas las llamadas.
+
+**Cómo se verifica:**
+1. En `/players`, cada filtro cambia el listado y la URL.
+2. Paginar no repite jugadores y "Anterior" está deshabilitado en la página 1.
+3. "Descargar CSV" baja `players.csv` con los mismos filtros que la pantalla.
+4. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.

@@ -8,11 +8,12 @@ export const routes: Routes = [
       import('./components/login/login').then((m) => m.LoginComponent),
   },
   {
-    // Temporal: se reemplaza por el listado en el commit 12.
     path: 'players',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./components/player/player').then((m) => m.PlayerComponent),
+      import('./components/player-list/player-list').then(
+        (m) => m.PlayerListComponent,
+      ),
   },
   { path: '', pathMatch: 'full', redirectTo: 'players' },
   { path: '**', redirectTo: 'players' },
