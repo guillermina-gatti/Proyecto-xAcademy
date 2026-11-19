@@ -1,18 +1,21 @@
+**Guillermina Gatti**
+
 # Santex Academy - FootballAPI
 
 Aplicación web para gestionar jugadores de FIFA, de ambos géneros.
 
 Este repositorio es un fork personal del proyecto base de SantexAcademy.
 
-- **Backend:** Node.js 22, NestJS, Sequelize, MySQL 8
-- **Frontend:** Angular 20, Chart.js
+- **Backend:** Node.js 26, NestJS 11, Sequelize, MySQL 9.7
+- **Frontend:** Angular 20, Chart.js (pendiente, se agrega en el commit 13)
 - **Infraestructura:** Docker Compose
+
 
 ## Requisitos previos
 
 - Docker Desktop en Windows, con el backend WSL 2 habilitado (Settings → General → "Use the WSL 2 based engine").
 - Git.
-- Node.js 22, solo si querés correr el backend fuera de Docker.
+- Node.js 26, solo si querés correr el backend fuera de Docker.
 
 ## Pasos para correr
 
@@ -153,13 +156,32 @@ Para verificarlo:
 2. Ejecutar `git check-ignore -v data/male_players-1.csv`, con la carpeta `data/` creada (si no existe, el comando no devuelve nada).
 3. Ejecutar `git status` y confirmar que no aparece ninguno de los dos archivos.
 
-### Versiones fijadas y finales de línea
+### Versiones de runtime y motor de base de datos
 
-Node 22 y MySQL 8.0 quedan fijados en el `Dockerfile` y en la configuración de Docker Compose, para que el proyecto se comporte igual en Windows y en otras máquinas. Angular 20 ya estaba así en el proyecto base, y lo confirmamos como la versión de referencia. Los archivos de texto se guardan con finales de línea LF, definidos en `.gitattributes`, porque los CRLF de Windows rompen los scripts de shell que corren dentro de los contenedores.
+**Decisión:** Node.js 26 (LTS activa) y MySQL 9.7 LTS, en lugar de Node.js 22 y MySQL 8.0. Quedan fijados en el `Dockerfile` y en `docker-compose.yml`, para que el proyecto se comporte igual en Windows y en otras máquinas.
+
+**Alternativas consideradas:**
+- Node.js 24 (mantenimiento LTS, seguridad hasta abril de 2028) y Node.js 22 (mantenimiento, seguridad hasta abril de 2027): descartadas por tener menos soporte que la 26.
+- MySQL 8.4 LTS (soporte hasta abril de 2032): alternativa conservadora, descartada porque 9.7 LTS tiene soporte más largo.
+- MySQL 26.10 (Innovation): la versión más nueva, descartada porque no es LTS y su soporte es corto.
+- MySQL 8.0: descartada porque su soporte terminó el 30 de abril de 2026.
+
+**Motivo:** MySQL 8.0 ya no recibe soporte y Node.js 22 está en mantenimiento. Se eligieron las LTS con soporte más largo. Además, MySQL 9 no habilita por defecto el plugin de autenticación `mysql_native_password`, por lo que se quitó la línea `command:` de `docker-compose.yml`.
+
+**Cómo se verifica:**
+1. `docker compose up -d --build` levanta `mysql_db`, `backend` y `frontend`.
+2. `curl -i http://localhost:3000/api/players/1` responde 200 con JSON.
+3. `curl -i http://localhost:3000/api/players/999999` responde 404.
+4. `node -v` dentro del contenedor del backend devuelve `v26.x`.
+
+Fuentes de fechas de soporte: endoflife.date (Node.js y MySQL) y el anuncio de MySQL de octubre de 2026.
+
+### Finales de línea
+
+Los archivos de texto se guardan con finales de línea LF, definidos en `.gitattributes`, porque los CRLF de Windows rompen los scripts de shell que corren dentro de los contenedores.
 
 Para verificarlo:
-1. Ejecutar `node -v` y confirmar que devuelve `v22.x`.
-2. Ejecutar `git ls-files --eol` y confirmar que no aparece `crlf` en el índice.
+1. Ejecutar `git ls-files --eol` y confirmar que no aparece `i/crlf` en el índice.
 
 ### Configuración de Sequelize y esquema
 
