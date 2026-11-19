@@ -50,7 +50,7 @@ describe('csv-player-parser', () => {
   it('convierte el fixture masculino y guarda a Messi con su identidad', async () => {
     const rows = toRows(await readFixture('male_players_fixture.csv'), 'male');
 
-    expect(rows).toHaveLength(8);
+    expect(rows).toHaveLength(20);
     const messi = rows[0];
     expect(messi.fifaPlayerId).toBe(158023);
     expect(messi.fifaVersion).toBe(15);
@@ -65,7 +65,7 @@ describe('csv-player-parser', () => {
       'female',
     );
 
-    expect(rows).toHaveLength(11);
+    expect(rows).toHaveLength(20);
     const morgan = rows.find((row) => row.fifaPlayerId === 226301);
     expect(morgan).toBeDefined();
     expect(morgan?.clubName).toBeNull();
