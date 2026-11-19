@@ -9,7 +9,7 @@ Aplicación web para gestionar jugadores de FIFA, de ambos géneros.
 Este repositorio es un fork personal del proyecto base de SantexAcademy.
 
 - **Backend:** Node.js 26, NestJS 11, Sequelize, MySQL 9.7
-- **Frontend:** Angular 20, Chart.js (pendiente, se agrega en el commit 13)
+- **Frontend:** Angular 20, Chart.js (pendiente)
 - **Infraestructura:** Docker Compose
 
 
@@ -227,3 +227,48 @@ Para verificarlo:
 1. En `football-api\backend`, `npm run test:e2e` pasa con MySQL levantado.
 2. El workflow `CI` pasa en verde en la pestaña Actions de GitHub.
 3. Prueba de falla: un error introducido a propósito hace fallar el CI, y al revertirlo vuelve a pasar.
+
+### Esquema con migraciones: tabla base y columnas nuevas
+
+**Decisión:** la tabla `players` se crea con una migración base (`20261119000001-create-players.js`) que usa `CREATE TABLE IF NOT EXISTS`, con las mismas columnas de `docker/db/init.sql`. La migración `20261119000002-players-fifa-columns.js` agrega las columnas nuevas.
+
+**Alternativas consideradas:** quitar el seed de inmediato y crear la tabla sin `IF NOT EXISTS`. Descartado: con el seed todavía cargado, la migración fallaría en una base que ya tiene la tabla.
+
+**Motivo:** las migraciones no deben depender del seed. Con `IF NOT EXISTS` conviven con `init.sql` hasta que se elimina el seed.
+
+**Cómo se verifica:**
+1. Base vacía: `npm run migrate` crea la tabla sin errores.
+2. Base con seed: `npm run migrate` no pierde filas. `SELECT COUNT(*) FROM players;` da el mismo valor antes y después.
+3. `npm run migrate:undo` y luego `npm run migrate` dejan el mismo estado.
+
+Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no es seguro con datos cargados.
+
+### Versión de FIFA como entero
+
+**Decisión:** `fifa_version` pasa de `VARCHAR(255)` a `INT`. Se guarda el año de la edición en dos dígitos del CSV (`15` para FIFA 15, edición 2015).
+
+**Alternativas consideradas:** mantener `VARCHAR`. Descartado: ordenar y filtrar por versión como texto da resultados incorrectos (por ejemplo, `9` queda después de `15`).
+
+**Motivo:** la versión es un número. Permite filtrar `fifaVersion` de forma numérica en el listado y en la línea de tiempo.
+
+**Cómo se verifica:** `SELECT DISTINCT fifa_version FROM players ORDER BY fifa_version;` devuelve números (`15`, `16`, ...).
+
+### Género en la misma tabla
+
+**Decisión:** la columna `gender` es un `ENUM('male','female','not_specified')` en la misma tabla `players`. Los datos de FIFA usan `male` o `female`. Los jugadores creados por el usuario pueden elegir `not_specified` ("Prefiero no decirlo") en el formulario.
+
+**Alternativas consideradas:** una tabla separada por género. Descartado: las dos tablas tendrían las mismas columnas y el listado tendría que unirlas.
+
+**Motivo:** una sola tabla mantiene el mismo listado, filtro y CSV para ambos géneros. El filtro por `gender` lo resuelve.
+
+**Cómo se verifica:** `SELECT gender, COUNT(*) FROM players GROUP BY gender;` muestra solo los valores del enum.
+
+### Identificador de FIFA (`fifa_player_id`)
+
+**Decisión:** `fifa_player_id` se rellena desde `player_face_url`. El patrón `/players/200/911/...` da `200911`. Para Messi, la URL del seed es `/players/158/023/`, así que su valor es `158023`. Los jugadores creados por el usuario tendrán `fifa_version = 0` y un `fifa_player_id` desde `900001`, asignado por el servidor. La identidad de una fila es `(fifa_player_id, fifa_version, gender)`.
+
+**Alternativas consideradas:** usar el `id` autoincremental como identidad entre ediciones. Descartado: el `id` cambia si se recarga la base, y el mismo jugador no tiene el mismo `id` en cada edición.
+
+**Motivo:** `player_id` del CSV de FIFA identifica al jugador a lo largo de todas las ediciones. El número de la URL es ese mismo identificador.
+
+**Cómo se verifica:** `SELECT fifa_player_id, fifa_version, gender FROM players WHERE id = 1;` devuelve `158023`. El backfill de la migración falla si queda algún jugador sin `fifa_player_id`.

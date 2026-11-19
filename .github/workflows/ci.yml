@@ -52,6 +52,9 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Migrar esquema
+        run: npm run migrate
+
       - name: Compilar
         run: npm run build
 
