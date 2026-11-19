@@ -8,10 +8,9 @@ Aplicación web para gestionar jugadores de FIFA, de ambos géneros.
 
 Este repositorio es un fork personal del proyecto base de SantexAcademy.
 
-- **Backend:** Node.js 26, NestJS 11, Sequelize, MySQL 9.7
-- **Frontend:** Angular 20, Chart.js (pendiente)
+- **Backend:** Node.js 26, NestJS 11, Sequelize, MySQL 9.7, autenticación JWT con bcryptjs
+- **Frontend:** Angular 21, Chart.js (pendiente)
 - **Infraestructura:** Docker Compose
-
 
 ## Requisitos previos
 
@@ -47,7 +46,9 @@ Este repositorio es un fork personal del proyecto base de SantexAcademy.
 
 4. Completar en `.env` los valores que correspondan. La clave `GOOGLE_API_KEY` se obtiene en Google AI Studio (https://aistudio.google.com), con una cuenta de Google. Todavía no se usa: el análisis con LangChain llega más adelante, así que puede quedar vacía por ahora. Nunca subas `.env` al repositorio.
 
-5. Levantar todo:
+5. Generar los secretos de autenticación (ver [Autenticación](#autenticación)).
+
+6. Levantar todo:
 
    ```bash
    docker compose up --build
@@ -61,6 +62,42 @@ Este repositorio es un fork personal del proyecto base de SantexAcademy.
 | Frontend | http://localhost:4200 |
 | MySQL | localhost:3306 |
 
+### Autenticación
+
+La API usa JWT. Todas las rutas de jugadores requieren un token, excepto `POST /api/auth/login`.
+
+Las variables de autenticación están en `.env`:
+
+- `JWT_SECRET`: obligatorio. Si falta, la aplicación no arranca. Generalo con:
+
+  ```powershell
+  docker compose exec -T backend node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+  ```
+
+- `ADMIN_USER`: usuario del admin (por defecto `admin`).
+- `ADMIN_PASSWORD_HASH`: hash bcrypt de la clave del admin, entre comillas simples. La clave en texto plano nunca se guarda. Para generar el hash:
+
+  ```powershell
+  docker compose exec -T backend node -e "console.log(require('bcryptjs').hashSync('TU_CLAVE', 10))"
+  ```
+
+  Reemplazá `TU_CLAVE` por la clave que quieras usar y pegá el resultado en `ADMIN_PASSWORD_HASH`.
+
+Después de cambiar `.env`, reiniciá el backend:
+
+```powershell
+docker compose up -d --force-recreate backend
+```
+
+Para obtener un token:
+
+```powershell
+$body = @{ username = 'admin'; password = 'TU_CLAVE' } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/auth/login -ContentType 'application/json' -Body $body
+```
+
+La respuesta trae `accessToken`. Ese valor va en el header `Authorization: Bearer <token>` de cada petición.
+
 ### Carga inicial de datos
 
 La base se llena con el importador de CSV. Los archivos CSV de FIFA no se versionan: se colocan en la carpeta `football-api/data/`, que está en `.gitignore`. El backend ya aplicó las migraciones al arrancar, así que solo falta importar, primero los hombres y después las mujeres:
@@ -73,20 +110,38 @@ docker compose exec backend npm run import:csv -- --file data/female_players.csv
 
 El nombre del archivo puede ser cualquiera; lo que importa es el `--gender`. Repetir una importación no duplica filas: al terminar cada una se imprime cuántas filas se leyeron, guardaron y descartaron.
 
+### Pruebas con Postman
+
+En la carpeta `football-api/postman/` están la colección y el entorno.
+
+1. En Postman, importá `postman/football-api.postman_collection.json` y `postman/football-api.postman_environment.json`.
+2. Seleccioná el entorno **Football API - local**.
+3. En el entorno, poné tu clave del admin en `password` (texto plano, no el hash). El archivo exportado tiene un valor de ejemplo: no lo cambies por la clave real en el archivo del repositorio.
+4. Corré primero **Login correcto (200)**, para que se guarde el token en el entorno.
+5. Ejecutá la colección completa con **Run**. Debe pasar sin errores.
+
+Las requests de alta (POST) guardan `playerId`, y las de detalle y edición lo usan. Si las ejecutás sueltas o en otro orden, pueden fallar.
+
 ## Verificación
 
-Con los servicios levantados:
+Con los servicios levantados y un token obtenido como se explica en [Autenticación](#autenticación):
 
-```bash
+```powershell
 # Ver el rango de IDs que existen en la base.
 # La contraseña es el valor de MYSQL_ROOT_PASSWORD en .env.
 docker exec santex_academy_football_api_db mysql -uroot -proot football_db -e "SELECT MIN(id), MAX(id) FROM players;"
 
+$body = @{ username = 'admin'; password = 'TU_CLAVE' } | ConvertTo-Json
+$token = (Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/auth/login -ContentType 'application/json' -Body $body).accessToken
+
 # Reemplazar 1 por un ID real. Debe responder 200 con JSON
-curl -i http://localhost:3000/api/players/1
+curl.exe -i -H "Authorization: Bearer $token" http://localhost:3000/api/players/1
 
 # Un ID inexistente debe responder 404
-curl -i http://localhost:3000/api/players/999999
+curl.exe -i -H "Authorization: Bearer $token" http://localhost:3000/api/players/999999
+
+# Sin token debe responder 401
+curl.exe -i http://localhost:3000/api/players/1
 ```
 
 En PowerShell usá `curl.exe` en lugar de `curl`.
@@ -148,6 +203,8 @@ npm run migrate:undo
 
 ## Decisiones técnicas y funcionales
 
+En las secciones siguientes, los comandos `curl` de "Cómo se verifica" asumen que ya tenés un token (ver [Autenticación](#autenticación)). Para las rutas de jugadores, agregá el header `Authorization: Bearer <token>`.
+
 ### Fork del repositorio base
 
 Usamos el fork del proyecto base de SantexAcademy en lugar de empezar de cero. La base ya trae Docker Compose, el backend en NestJS y el frontend en Angular, así que `docker compose up` funciona sin rearmar la infraestructura. Lo comprobamos levantando los tres servicios y consultando `GET /api/players/:id`.
@@ -155,7 +212,7 @@ Usamos el fork del proyecto base de SantexAcademy en lugar de empezar de cero. L
 Para verificarlo:
 1. Ejecutar `docker compose up --build`.
 2. Comprobar que los tres servicios levantan.
-3. Consultar `curl -i http://localhost:3000/api/players/1` y ver una respuesta 200.
+3. Consultar `curl -i http://localhost:3000/api/players/1` con token y ver una respuesta 200.
 
 ### Secretos y datos fuera del repositorio
 
@@ -165,6 +222,67 @@ Para verificarlo:
 1. Ejecutar `git check-ignore -v .env`.
 2. Ejecutar `git check-ignore -v data/male_players-1.csv`, con la carpeta `data/` creada (si no existe, el comando no devuelve nada).
 3. Ejecutar `git status` y confirmar que no aparece ninguno de los dos archivos.
+
+### Autenticación con JWT y contraseña hasheada
+
+**Decisión:** el login es `POST /api/auth/login` con `username` y `password`. Devuelve un `accessToken` JWT. Un guard global exige el token en todas las rutas, salvo las marcadas con `@Public()`. La contraseña del admin no se guarda en texto plano: `ADMIN_PASSWORD_HASH` contiene el hash bcrypt, y el backend lo compara con `bcryptjs`. Si falta `JWT_SECRET`, la aplicación no arranca.
+
+**Alternativas consideradas:**
+- Usuario y contraseña en texto plano en `.env`: descartado, la clave quedaría visible en el archivo y en cualquier copia del entorno.
+- Sesiones con cookie de servidor: descartado, obliga a guardar estado en el backend y complica el consumo desde Angular.
+- Librería `bcrypt` nativa: descartada por ahora, porque requiere compilar el módulo dentro de la imagen de Docker. `bcryptjs` es JavaScript puro y genera hashes `$2b$` compatibles.
+
+**Motivo:** la consigna pide que la API tenga autenticación. Con un solo usuario admin alcanza, y el hash evita guardar la clave.
+
+**Cómo se verifica:**
+1. Sin token, `curl -i http://localhost:3000/api/players/1` responde 401.
+2. `POST /api/auth/login` con clave incorrecta responde 401; sin `password`, responde 400.
+3. `POST /api/auth/login` con la clave correcta responde 200 con `accessToken`.
+4. Con el token en el header, `GET /api/players/1` responde 200.
+5. `npm run test:e2e` pasa, incluyendo los tests de `auth.e2e-spec.ts`.
+
+### Configuración de Sequelize y esquema
+
+El puerto de la base se lee como número decimal con `parseInt(..., 10)`. El código base usaba `parseInt(..., 3306)`, que devuelve `NaN` porque 3306 no es una base numérica válida.
+
+Los campos del modelo se declaran con `declare`. Sin esa palabra, TypeScript los inicializa en `undefined` y tapa los valores que devuelve la base, por eso la API mostraba skills en 0.
+
+La conexión usa `utf8mb4` para soportar tildes, eñes y emojis. Esto evita nuevos errores de codificación, pero no corrige datos ya guardados mal. El importador también corrige los nombres con mojibake al leer el CSV, por ejemplo `AndrÃ©s` por `Andrés`.
+
+`synchronize` está en `false`. La aplicación no modifica el esquema al arrancar. Los cambios de tabla se hacen con migraciones versionadas, que se pueden aplicar y revertir.
+
+La CLI de migraciones usa `config/config.js` y `.sequelizerc`, separados de la configuración de la aplicación, porque la CLI corre con Node y no entiende TypeScript.
+
+Para verificarlo:
+1. Ejecutar `curl -i` sobre `/api/players/1` con token y confirmar `speed: 93`, `shooting: 89`, `dribbling: 96` y `passing: 86`.
+2. Ejecutar `curl -i` sobre `/api/players/999999` con token y confirmar 404.
+3. Ejecutar `npm run migrate` dentro del contenedor del backend y confirmar que termina sin errores.
+
+### Un solo ORM: Sequelize
+
+**Decisión:** Sequelize es el único ORM del backend. Se eliminan TypeORM, `@nestjs/typeorm` y el código que no se usaba.
+
+**Alternativas consideradas:** mantener TypeORM junto a Sequelize. Descartado: dos ORMs sin uso aumentan las dependencias y no cumplen la consigna, que pide un ORM.
+
+**Motivo:** la consigna pide un ORM (ejemplo Sequelize). El código de TypeORM no se ejecutaba.
+
+**Cómo se verifica:**
+1. `Get-ChildItem src -Recurse -File | Select-String -Pattern "typeorm"` dentro de `football-api\backend` no devuelve resultados.
+2. `npm run build` termina sin errores.
+3. `curl -i` sobre `/api/players/1` con token responde 200 y `/api/players/999999` responde 404.
+
+### Tests de integración contra MySQL real
+
+**Decisión:** los tests e2e usan la base MySQL real, sin mocks, tanto en local como en GitHub Actions. El CI usa MySQL 9.7, aplica las migraciones e importa los fixtures de `test/fixtures/` antes de correr los tests.
+
+**Alternativas consideradas:** mockear el repositorio. Descartado: un mock no detecta errores de SQL ni de mapeo de Sequelize.
+
+**Motivo:** la API depende de la base. Probar contra la base real detecta errores de conexión, consulta y datos.
+
+**Cómo se verifica:**
+1. En `football-api\backend`, `npm run test:e2e` pasa con MySQL levantado.
+2. El workflow `CI` pasa en verde en la pestaña Actions de GitHub.
+3. Prueba de falla: un error introducido a propósito hace fallar el CI, y al revertirlo vuelve a pasar.
 
 ### Versiones de runtime y motor de base de datos
 
@@ -180,8 +298,8 @@ Para verificarlo:
 
 **Cómo se verifica:**
 1. `docker compose up -d --build` levanta `mysql_db`, `backend` y `frontend`.
-2. `curl -i http://localhost:3000/api/players/1` responde 200 con JSON.
-3. `curl -i http://localhost:3000/api/players/999999` responde 404.
+2. `curl -i` sobre `/api/players/1` con token responde 200 con JSON.
+3. `curl -i` sobre `/api/players/999999` con token responde 404.
 4. `node -v` dentro del contenedor del backend devuelve `v26.x`.
 
 Fuentes de fechas de soporte: endoflife.date (Node.js y MySQL) y el anuncio de MySQL de octubre de 2026.
@@ -192,49 +310,6 @@ Los archivos de texto se guardan con finales de línea LF, definidos en `.gitatt
 
 Para verificarlo:
 1. Ejecutar `git ls-files --eol` y confirmar que no aparece `i/crlf` en el índice.
-
-### Configuración de Sequelize y esquema
-
-El puerto de la base se lee como número decimal con `parseInt(..., 10)`. El código base usaba `parseInt(..., 3306)`, que devuelve `NaN` porque 3306 no es una base numérica válida.
-
-Los campos del modelo se declaran con `declare`. Sin esa palabra, TypeScript los inicializa en `undefined` y tapa los valores que devuelve la base, por eso la API mostraba skills en 0.
-
-La conexión usa `utf8mb4` para soportar tildes, eñes y emojis. Esto evita nuevos errores de codificación, pero no corrige datos ya guardados mal. El importador también corrige los nombres con mojibake al leer el CSV, por ejemplo `AndrÃ©s` por `Andrés`.
-
-`synchronize` está en `false`. La aplicación no modifica el esquema al arrancar. Los cambios de tabla se hacen con migraciones versionadas, que se pueden aplicar y revertir.
-
-La CLI de migraciones usa `config/config.js` y `.sequelizerc`, separados de la configuración de la aplicación, porque la CLI corre con Node y no entiende TypeScript.
-
-Para verificarlo:
-1. Ejecutar `curl -i http://localhost:3000/api/players/1` y confirmar `speed: 93`, `shooting: 89`, `dribbling: 96` y `passing: 86`.
-2. Ejecutar `curl -i http://localhost:3000/api/players/999999` y confirmar 404.
-3. Ejecutar `npm run migrate` dentro del contenedor del backend y confirmar que termina sin errores.
-
-### Un solo ORM: Sequelize
-
-**Decisión:** Sequelize es el único ORM del backend. Se eliminan TypeORM, `@nestjs/typeorm` y el código que no se usaba.
-
-**Alternativas consideradas:** mantener TypeORM junto a Sequelize. Descartado: dos ORMs sin uso aumentan las dependencias y no cumplen la consigna, que pide un ORM.
-
-**Motivo:** la consigna pide un ORM (ejemplo Sequelize). El código de TypeORM no se ejecutaba.
-
-**Cómo se verifica:**
-1. `Get-ChildItem src -Recurse -File | Select-String -Pattern "typeorm"` dentro de `football-api\backend` no devuelve resultados.
-2. `npm run build` termina sin errores.
-3. `curl -i http://localhost:3000/api/players/1` responde 200 y `curl -i http://localhost:3000/api/players/999999` responde 404.
-
-### Tests de integración contra MySQL real
-
-**Decisión:** los tests e2e usan la base MySQL real, sin mocks, tanto en local como en GitHub Actions. El CI usa MySQL 9.7, aplica las migraciones e importa los fixtures de `test/fixtures/` antes de correr los tests.
-
-**Alternativas consideradas:** mockear el repositorio. Descartado: un mock no detecta errores de SQL ni de mapeo de Sequelize.
-
-**Motivo:** la API depende de la base. Probar contra la base real detecta errores de conexión, consulta y datos.
-
-**Cómo se verifica:**
-1. En `football-api\backend`, `npm run test:e2e` pasa con MySQL levantado.
-2. El workflow `CI` pasa en verde en la pestaña Actions de GitHub.
-3. Prueba de falla: un error introducido a propósito hace fallar el CI, y al revertirlo vuelve a pasar.
 
 ### Esquema con migraciones: tabla base y columnas nuevas
 
@@ -352,7 +427,7 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 **Límite conocido:** si la base falla a mitad de la exportación, el archivo queda cortado y el cliente no recibe un error explícito, porque las cabeceras ya se enviaron.
 
 **Cómo se verifica:**
-1. `GET /api/players/export.csv` responde 200 con `Content-Type: text/csv` y `Content-Disposition` de descarga.
+1. `GET /api/players/export.csv` con token responde 200 con `Content-Type: text/csv` y `Content-Disposition` de descarga.
 2. `GET /api/players/export.csv?gender=female` tiene 13 líneas (12 jugadores y la cabecera), igual que `meta.total` del listado con el mismo filtro más una.
 3. `?page=2` y `?gender=otro` responden 400.
 4. `npm run test:e2e` pasa completo.
