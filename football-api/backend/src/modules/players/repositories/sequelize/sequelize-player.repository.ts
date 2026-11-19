@@ -5,6 +5,7 @@ import { PlayerModel } from './player.model'; // Sequelize model
 import {
   IPlayerRepository,
   PlayerCreateData,
+  PlayerFilters,
   PlayerListParams,
   PlayerListResult,
   PlayerWriteData,
@@ -40,6 +41,23 @@ export class SequelizePlayerRepository implements IPlayerRepository {
       offset: (params.page - 1) * params.limit,
     });
     return { rows: rows.map((x) => this.mapToEntity(x)), total: count };
+  }
+
+  // Keyset por id: cada lote arranca despues del ultimo id del lote anterior.
+  // Es mas estable y rapido que offset para recorrer toda la tabla.
+  async findBatchAfter(
+    filters: PlayerFilters,
+    afterId: number,
+    limit: number,
+  ): Promise<Player[]> {
+    const rows = await this.playerModel.findAll({
+      where: {
+        [Op.and]: [this.buildWhere(filters), { id: { [Op.gt]: afterId } }],
+      },
+      order: [['id', 'ASC']],
+      limit,
+    });
+    return rows.map((x) => this.mapToEntity(x));
   }
 
   async create(data: PlayerCreateData, fifaPlayerId: number): Promise<Player> {
@@ -102,30 +120,30 @@ export class SequelizePlayerRepository implements IPlayerRepository {
     return last ? last.fifaPlayerId + 1 : 900001;
   }
 
-  private buildWhere(params: PlayerListParams): WhereOptions<PlayerModel> {
+  private buildWhere(filters: PlayerFilters): WhereOptions<PlayerModel> {
     const conditions: WhereOptions<PlayerModel>[] = [];
 
-    if (params.name) {
-      conditions.push({ longName: { [Op.like]: `%${params.name}%` } });
+    if (filters.name) {
+      conditions.push({ longName: { [Op.like]: `%${filters.name}%` } });
     }
-    if (params.club) {
-      conditions.push({ clubName: { [Op.like]: `%${params.club}%` } });
+    if (filters.club) {
+      conditions.push({ clubName: { [Op.like]: `%${filters.club}%` } });
     }
-    if (params.position) {
+    if (filters.position) {
       conditions.push({
-        playerPositions: { [Op.like]: `%${params.position}%` },
+        playerPositions: { [Op.like]: `%${filters.position}%` },
       });
     }
-    if (params.nationality) {
+    if (filters.nationality) {
       conditions.push({
-        nationalityName: { [Op.like]: `%${params.nationality}%` },
+        nationalityName: { [Op.like]: `%${filters.nationality}%` },
       });
     }
-    if (params.gender) {
-      conditions.push({ gender: params.gender });
+    if (filters.gender) {
+      conditions.push({ gender: filters.gender });
     }
-    if (params.fifaVersion !== undefined) {
-      conditions.push({ fifaVersion: params.fifaVersion });
+    if (filters.fifaVersion !== undefined) {
+      conditions.push({ fifaVersion: filters.fifaVersion });
     }
 
     return conditions.length > 0 ? { [Op.and]: conditions } : {};

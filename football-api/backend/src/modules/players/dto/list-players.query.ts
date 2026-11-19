@@ -1,15 +1,8 @@
 import { Type } from 'class-transformer';
-import {
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { PlayerFiltersDto } from './player-filters.dto';
 
-export class ListPlayersQueryDto {
+export class ListPlayersQueryDto extends PlayerFiltersDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -22,34 +15,4 @@ export class ListPlayersQueryDto {
   @Min(1)
   @Max(100)
   limit: number = 20;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  name?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  club?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  position?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  nationality?: string;
-
-  @IsOptional()
-  @IsIn(['male', 'female', 'not_specified'])
-  gender?: 'male' | 'female' | 'not_specified';
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  fifaVersion?: number;
 }

@@ -1,14 +1,17 @@
 import { Player, PlayerGender } from '../entities/player.entity';
 
-export interface PlayerListParams {
-  page: number;
-  limit: number;
+export interface PlayerFilters {
   name?: string;
   club?: string;
   position?: string;
   nationality?: string;
   gender?: PlayerGender;
   fifaVersion?: number;
+}
+
+export interface PlayerListParams extends PlayerFilters {
+  page: number;
+  limit: number;
 }
 
 export interface PlayerListResult {
@@ -42,6 +45,11 @@ export interface IPlayerRepository {
   findAll(): Promise<Player[]>;
   findOneById(id: number): Promise<Player | undefined>;
   findPaginated(params: PlayerListParams): Promise<PlayerListResult>;
+  findBatchAfter(
+    filters: PlayerFilters,
+    afterId: number,
+    limit: number,
+  ): Promise<Player[]>;
   create(data: PlayerCreateData, fifaPlayerId: number): Promise<Player>;
   update(id: number, data: PlayerWriteData): Promise<Player | undefined>;
   nextUserFifaPlayerId(): Promise<number>;

@@ -340,3 +340,19 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 3. Un `POST` con skill 100, nombre vacío o género fuera de la lista responde 400.
 4. `PATCH` cambia solo lo enviado y responde 200; `PATCH` a un id inexistente responde 404; un campo desconocido responde 400.
 5. `npm run test:e2e` pasa completo.
+
+### Exportar el listado filtrado a CSV
+
+**Decisión:** `GET /api/players/export.csv` acepta los mismos filtros que el listado (`name`, `club`, `position`, `nationality`, `gender`, `fifaVersion`) y devuelve todas las filas que coinciden, sin paginación. La respuesta es `text/csv; charset=utf-8` con `Content-Disposition: attachment; filename="players.csv"`. El archivo empieza con BOM UTF-8 para que Excel muestre bien las tildes y la eñe. Los valores que empiezan con `=`, `+`, `-` o `@` se prefijan con una comilla simple para que Excel no los ejecute como fórmulas.
+
+**Alternativas consideradas:** generar el archivo completo en memoria y responderlo de una vez (descartado: el listado completo son 165.000 filas); paginar la exportación (descartado: un CSV paginado obliga al usuario a unir archivos); exportar en XLSX (descartado por ahora: la consigna pide CSV y el hint de XLSX es opcional).
+
+**Motivo:** la lectura se hace en lotes de 1.000 filas por clave `id` (keyset), así que la memoria se mantiene baja y cada lote se escribe antes de leer el siguiente. La ruta `export.csv` se declara antes de `:id`, porque si no, responde 400.
+
+**Límite conocido:** si la base falla a mitad de la exportación, el archivo queda cortado y el cliente no recibe un error explícito, porque las cabeceras ya se enviaron.
+
+**Cómo se verifica:**
+1. `GET /api/players/export.csv` responde 200 con `Content-Type: text/csv` y `Content-Disposition` de descarga.
+2. `GET /api/players/export.csv?gender=female` tiene 13 líneas (12 jugadores y la cabecera), igual que `meta.total` del listado con el mismo filtro más una.
+3. `?page=2` y `?gender=otro` responden 400.
+4. `npm run test:e2e` pasa completo.
