@@ -3,6 +3,9 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { authenticateRequests, setTestAuthEnv } from './helpers/auth';
+
+setTestAuthEnv();
 
 describe('Players (e2e)', () => {
   let app: INestApplication<App>;
@@ -13,6 +16,7 @@ describe('Players (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    authenticateRequests(moduleFixture, app);
     await app.init();
   });
 

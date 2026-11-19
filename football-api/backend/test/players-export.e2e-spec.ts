@@ -4,6 +4,7 @@ import { getModelToken } from '@nestjs/sequelize';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { authenticateRequests, setTestAuthEnv } from './helpers/auth';
 import { PlayerModel } from '../src/modules/players/repositories/sequelize/player.model';
 
 // Requiere los fixtures: 20 masculinos y 12 femeninos (32 en total).
@@ -11,6 +12,8 @@ import { PlayerModel } from '../src/modules/players/repositories/sequelize/playe
 const BOM = '\uFEFF';
 const HEADER =
   'id,name,club,position,nationality,gender,fifaVersion,fifaPlayerId,rating,speed,shooting,passing,dribbling,defending,physic';
+
+setTestAuthEnv();
 
 describe('Players export CSV (e2e)', () => {
   let app: INestApplication<App>;
@@ -21,6 +24,7 @@ describe('Players export CSV (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    authenticateRequests(moduleFixture, app);
     await app.init();
   });
 

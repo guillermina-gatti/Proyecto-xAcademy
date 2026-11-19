@@ -4,6 +4,7 @@ import { getModelToken } from '@nestjs/sequelize';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { authenticateRequests, setTestAuthEnv } from './helpers/auth';
 import { PlayerModel } from '../src/modules/players/repositories/sequelize/player.model';
 
 // Requiere la base cargada con los fixtures (Messi: id 1, fifa_player_id 158023).
@@ -26,6 +27,8 @@ interface PlayerBody {
   physic: number;
 }
 
+setTestAuthEnv();
+
 describe('Players write (e2e)', () => {
   let app: INestApplication<App>;
   let createdId: number;
@@ -37,6 +40,7 @@ describe('Players write (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    authenticateRequests(moduleFixture, app);
     await app.init();
   });
 

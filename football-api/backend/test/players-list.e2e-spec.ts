@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { authenticateRequests, setTestAuthEnv } from './helpers/auth';
 
 // Requiere la base cargada con los fixtures:
 // 20 jugadores masculinos y 12 femeninos (32 en total).
@@ -10,6 +11,8 @@ interface PlayerListBody {
   data: { id: number; name: string; club: string; nationality: string }[];
   meta: { page: number; limit: number; total: number; totalPages: number };
 }
+
+setTestAuthEnv();
 
 describe('Players list (e2e)', () => {
   let app: INestApplication<App>;
@@ -20,6 +23,7 @@ describe('Players list (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    authenticateRequests(moduleFixture, app);
     await app.init();
   });
 
