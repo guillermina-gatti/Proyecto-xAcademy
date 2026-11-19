@@ -8,9 +8,9 @@
 # Datos: archivos pesados que no deben guardarse en el historial.
 data/
 *.csv
+!football-api/backend/test/fixtures/*.csv
 
-# Dumps SQL de referencia de FIFA (muy grandes). No ignorar *.sql en general:
-# docker/db/init.sql es el seed que todavía usa el proyecto.
+# Dumps SQL de referencia de FIFA (muy grandes).
 fifa_*.sql
 
 # Dependencias, compilados y registros de errores generados automaticamente.

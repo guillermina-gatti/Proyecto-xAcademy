@@ -13,7 +13,6 @@ services:
       - "3306:3306" # Make sure it is the same port as DB_PORT in your .env file'
     volumes:
       - db_data:/var/lib/mysql
-      - ./docker/db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
@@ -40,6 +39,7 @@ services:
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
+      - ./data:/usr/src/app/data:ro
     ports:
       - "3000:3000"
     command: sh -c "npm run migrate && npm run start:dev"

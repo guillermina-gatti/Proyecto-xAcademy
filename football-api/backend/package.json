@@ -22,7 +22,8 @@
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:e2e": "jest --config ./test/jest-e2e.json",
         "migrate": "sequelize-cli db:migrate",
-        "migrate:undo": "sequelize-cli db:migrate:undo"
+        "migrate:undo": "sequelize-cli db:migrate:undo",
+        "import:csv": "ts-node --transpile-only src/scripts/import-csv.ts"
     },
     "dependencies": {
         "@nestjs/common": "^11.0.1",
@@ -30,6 +31,7 @@
         "@nestjs/core": "^11.0.1",
         "@nestjs/platform-express": "^11.0.1",
         "@nestjs/sequelize": "^11.0.0",
+        "csv-parse": "^7.0.3",
         "dotenv": "^17.2.0",
         "mysql2": "^3.14.2",
         "reflect-metadata": "^0.2.2",

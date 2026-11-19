@@ -63,7 +63,15 @@ Este repositorio es un fork personal del proyecto base de SantexAcademy.
 
 ### Carga inicial de datos
 
-Por ahora la base se llena con el seed `docker/db/init.sql`, que solo contiene jugadores masculinos y no está completo. La carga completa de hombres y mujeres se hace con el importador de CSV, que se documenta cuando esté implementado. Los archivos CSV no se versionan: se colocan en la carpeta `football-api/data/`.
+La base se llena con el importador de CSV. Los archivos CSV de FIFA no se versionan: se colocan en la carpeta `football-api/data/`, que está en `.gitignore`. El backend ya aplicó las migraciones al arrancar, así que solo falta importar, primero los hombres y después las mujeres:
+
+```bash
+cd football-api
+docker compose exec backend npm run import:csv -- --file data/male_players.csv --gender male
+docker compose exec backend npm run import:csv -- --file data/female_players.csv --gender female
+```
+
+El nombre del archivo puede ser cualquiera; lo que importa es el `--gender`. Repetir una importación no duplica filas: al terminar cada una se imprime cuántas filas se leyeron, guardaron y descartaron.
 
 ## Verificación
 
@@ -191,7 +199,7 @@ El puerto de la base se lee como número decimal con `parseInt(..., 10)`. El có
 
 Los campos del modelo se declaran con `declare`. Sin esa palabra, TypeScript los inicializa en `undefined` y tapa los valores que devuelve la base, por eso la API mostraba skills en 0.
 
-La conexión usa `utf8mb4` para soportar tildes, eñes y emojis. Esto evita nuevos errores de codificación, pero no corrige datos ya guardados mal: el nombre de Messi en el seed actual aparece como `AndrÃ©s`, y se corrige al cargar los datos con el importador.
+La conexión usa `utf8mb4` para soportar tildes, eñes y emojis. Esto evita nuevos errores de codificación, pero no corrige datos ya guardados mal. El importador también corrige los nombres con mojibake al leer el CSV, por ejemplo `AndrÃ©s` por `Andrés`.
 
 `synchronize` está en `false`. La aplicación no modifica el esquema al arrancar. Los cambios de tabla se hacen con migraciones versionadas, que se pueden aplicar y revertir.
 
@@ -217,7 +225,7 @@ Para verificarlo:
 
 ### Tests de integración contra MySQL real
 
-**Decisión:** los tests e2e usan la base MySQL real, sin mocks, tanto en local como en GitHub Actions. El CI usa MySQL 9.7 y carga `football-api/docker/db/init.sql` al arrancar.
+**Decisión:** los tests e2e usan la base MySQL real, sin mocks, tanto en local como en GitHub Actions. El CI usa MySQL 9.7, aplica las migraciones e importa los fixtures de `test/fixtures/` antes de correr los tests.
 
 **Alternativas consideradas:** mockear el repositorio. Descartado: un mock no detecta errores de SQL ni de mapeo de Sequelize.
 
@@ -230,15 +238,15 @@ Para verificarlo:
 
 ### Esquema con migraciones: tabla base y columnas nuevas
 
-**Decisión:** la tabla `players` se crea con una migración base (`20261119000001-create-players.js`) que usa `CREATE TABLE IF NOT EXISTS`, con las mismas columnas de `docker/db/init.sql`. La migración `20261119000002-players-fifa-columns.js` agrega las columnas nuevas.
+**Decisión:** la tabla `players` se crea con una migración base (`20261119000001-create-players.js`) que usa `CREATE TABLE IF NOT EXISTS`, con las columnas base de los jugadores. La migración `20261119000002-players-fifa-columns.js` agrega las columnas nuevas.
 
-**Alternativas consideradas:** quitar el seed de inmediato y crear la tabla sin `IF NOT EXISTS`. Descartado: con el seed todavía cargado, la migración fallaría en una base que ya tiene la tabla.
+**Alternativas consideradas:** crear la tabla sin `IF NOT EXISTS`. Descartado: la migración fallaría en una base que ya tiene la tabla.
 
-**Motivo:** las migraciones no deben depender del seed. Con `IF NOT EXISTS` conviven con `init.sql` hasta que se elimina el seed.
+**Motivo:** las migraciones no deben depender de datos cargados a mano. Con `IF NOT EXISTS` la migración es segura en bases que ya tienen la tabla.
 
 **Cómo se verifica:**
 1. Base vacía: `npm run migrate` crea la tabla sin errores.
-2. Base con seed: `npm run migrate` no pierde filas. `SELECT COUNT(*) FROM players;` da el mismo valor antes y después.
+2. Base con datos: `npm run migrate` no pierde filas. `SELECT COUNT(*) FROM players;` da el mismo valor antes y después.
 3. `npm run migrate:undo` y luego `npm run migrate` dejan el mismo estado.
 
 Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no es seguro con datos cargados.
@@ -265,7 +273,7 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 
 ### Identificador de FIFA (`fifa_player_id`)
 
-**Decisión:** `fifa_player_id` se rellena desde `player_face_url`. El patrón `/players/200/911/...` da `200911`. Para Messi, la URL del seed es `/players/158/023/`, así que su valor es `158023`. Los jugadores creados por el usuario tendrán `fifa_version = 0` y un `fifa_player_id` desde `900001`, asignado por el servidor. La identidad de una fila es `(fifa_player_id, fifa_version, gender)`.
+**Decisión:** `fifa_player_id` se rellena desde `player_face_url`. El patrón `/players/200/911/...` da `200911`. Para Messi, la URL del CSV es `/players/158/023/`, así que su valor es `158023`. Los jugadores creados por el usuario tendrán `fifa_version = 0` y un `fifa_player_id` desde `900001`, asignado por el servidor. La identidad de una fila es `(fifa_player_id, fifa_version, gender)`.
 
 **Alternativas consideradas:** usar el `id` autoincremental como identidad entre ediciones. Descartado: el `id` cambia si se recarga la base, y el mismo jugador no tiene el mismo `id` en cada edición.
 
@@ -285,3 +293,18 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 2. Insertar una copia de un jugador existente falla con `ERROR 1062 (23000): Duplicate entry`.
 3. `SHOW INDEX FROM players;` muestra `uq_players_identity`, `idx_players_long_name`, `idx_players_club_name` e `idx_players_nationality_name`.
 4. `npm run migrate:undo` elimina los índices y `npm run migrate` los vuelve a crear.
+
+### Importador de CSV idempotente
+
+**Decisión:** la carga se hace con un script de línea de comandos (`npm run import:csv`) que lee el CSV en streaming y escribe en lotes de 1000 filas con upsert (`bulkCreate` con `updateOnDuplicate`) sobre la clave única `(fifa_player_id, fifa_version, gender)`. El CSV femenino trae varias filas por edición, así que antes de escribir se conserva solo la de `fifa_update` más reciente para cada `(fifa_player_id, fifa_version)`.
+
+**Alternativas consideradas:** un seed SQL (descartado: un dump de 25 MB en el repositorio y no resuelve la regla de dedupe por género); cargar el CSV completo en memoria (descartado: el femenino tiene 181.361 filas con 110 columnas); insertar sin upsert (descartado: repetir la carga duplicaría filas o fallaría por la clave única).
+
+**Motivo:** el streaming y los lotes mantienen el consumo de memoria bajo con archivos de cientos de MB. El upsert hace que la carga se pueda repetir sin efectos secundarios.
+
+**Cómo se verifica:**
+1. `npm run test -- csv-player-parser` pasa en el backend.
+2. Tras importar el masculino, `SELECT COUNT(*) FROM players WHERE gender = 'male';` devuelve 161.583.
+3. Tras importar el femenino, `SELECT COUNT(*) FROM players WHERE gender = 'female';` devuelve 4.131.
+4. Repetir las dos importaciones no cambia esos conteos.
+5. `SELECT id, fifa_version FROM players WHERE fifa_player_id = 158023;` devuelve varias ediciones de Messi.

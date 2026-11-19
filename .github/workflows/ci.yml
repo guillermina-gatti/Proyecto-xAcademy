@@ -39,10 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cargar seed en MySQL
-        run: mysql -h 127.0.0.1 -P 3306 -uroot -proot < ${{ github.workspace }}/football-api/docker/db/init.sql
-        working-directory: ${{ github.workspace }}
-
       - uses: actions/setup-node@v4
         with:
           node-version: 26
@@ -54,6 +50,12 @@ jobs:
 
       - name: Migrar esquema
         run: npm run migrate
+
+      - name: Importar fixture masculino
+        run: npm run import:csv -- --file test/fixtures/male_players_fixture.csv --gender male
+
+      - name: Importar fixture femenino
+        run: npm run import:csv -- --file test/fixtures/female_players_fixture.csv --gender female
 
       - name: Compilar
         run: npm run build
