@@ -24,7 +24,7 @@ Este repositorio es un fork personal del proyecto base de SantexAcademy.
 1. Clonar el repositorio:
 
    ```bash
-   git clone <URL_DE_TU_REPOSITORIO>
+   git clone https://github.com/guillermina-gatti/Proyecto-xAcademy.git
    ```
 
 2. Navegar a la carpeta del proyecto:
@@ -272,3 +272,16 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 **Motivo:** `player_id` del CSV de FIFA identifica al jugador a lo largo de todas las ediciones. El número de la URL es ese mismo identificador.
 
 **Cómo se verifica:** `SELECT fifa_player_id, fifa_version, gender FROM players WHERE id = 1;` devuelve `158023`. El backfill de la migración falla si queda algún jugador sin `fifa_player_id`.
+### Identidad única de cada fila e índices de filtros
+
+**Decisión:** la combinación `(fifa_player_id, fifa_version, gender)` es única. Una misma fila no puede repetirse para el mismo jugador, edición y género. Además se crean índices sobre `long_name`, `club_name` y `nationality_name`, que son los campos que filtra el listado. La migración busca duplicados antes de crear la clave única y falla con un mensaje claro si los hay.
+
+**Alternativas consideradas:** validar la unicidad solo en la aplicación. Descartado: dos peticiones simultáneas podrían crear la misma fila, y la base no lo impediría.
+
+**Motivo:** la base es la única que puede garantizar la unicidad. Los índices evitan que el filtro por nombre, club o nacionalidad recorra toda la tabla con 165.000 filas.
+
+**Cómo se verifica:**
+1. La consulta de duplicados devuelve cero filas: `SELECT fifa_player_id, fifa_version, gender, COUNT(*) c FROM players GROUP BY fifa_player_id, fifa_version, gender HAVING c > 1;`.
+2. Insertar una copia de un jugador existente falla con `ERROR 1062 (23000): Duplicate entry`.
+3. `SHOW INDEX FROM players;` muestra `uq_players_identity`, `idx_players_long_name`, `idx_players_club_name` e `idx_players_nationality_name`.
+4. `npm run migrate:undo` elimina los índices y `npm run migrate` los vuelve a crear.
