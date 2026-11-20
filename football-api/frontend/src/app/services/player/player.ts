@@ -11,10 +11,15 @@ export interface Player {
   position: string;
   nationality: string;
   rating: number;
+  potential: number;
+  age: number;
+  fifaVersion: number;
   speed: number;
   shooting: number;
-  dribbling: number;
   passing: number;
+  dribbling: number;
+  defending: number;
+  physic: number;
 }
 
 export type PlayerGender = 'male' | 'female' | 'not_specified';

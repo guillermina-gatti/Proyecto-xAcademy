@@ -55,4 +55,12 @@ describe('PlayerService', () => {
 
     req.flush(new Blob(['id,name']));
   });
+
+  it('pide el detalle por id', () => {
+    service.getPlayer(1).subscribe();
+
+    const req = ctrl.expectOne(`${api}/api/players/1`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
 });

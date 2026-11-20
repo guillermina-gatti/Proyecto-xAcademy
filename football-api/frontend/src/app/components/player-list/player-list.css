@@ -134,6 +134,13 @@ th {
   color: var(--ink-soft);
 }
 
+.name-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-pink);
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 768px) {
   .list-page {
     padding: 24px 16px;

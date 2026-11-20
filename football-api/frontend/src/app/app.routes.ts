@@ -15,6 +15,12 @@ export const routes: Routes = [
         (m) => m.PlayerListComponent,
       ),
   },
+  {
+    path: 'players/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/player/player').then((m) => m.PlayerComponent),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'players' },
   { path: '**', redirectTo: 'players' },
 ];

@@ -9,7 +9,7 @@ Aplicación web para gestionar jugadores de FIFA, de ambos géneros.
 Este repositorio es un fork personal del proyecto base de SantexAcademy.
 
 - **Backend:** Node.js 26, NestJS 11, Sequelize, MySQL 9.7, autenticación JWT con bcryptjs
-- **Frontend:** Angular 21, Chart.js (pendiente)
+- **Frontend:** Angular 21, Chart.js
 - **Infraestructura:** Docker Compose
 
 ## Requisitos previos
@@ -461,3 +461,16 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 2. Paginar no repite jugadores y "Anterior" está deshabilitado en la página 1.
 3. "Descargar CSV" baja `players.csv` con los mismos filtros que la pantalla.
 4. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.
+
+### Detalle del jugador con radar de skills
+
+**Decisión:** `/players/:id` muestra los datos principales del jugador y un radar con seis skills: velocidad, tiro, pase, regate, defensa y físico. El gráfico usa Chart.js y se destruye al salir de la pantalla. Los nombres de los skills coinciden con los campos de la API.
+
+**Alternativas consideradas:** mostrar los sub-atributos detallados (más de 30 valores) en el radar. Descartado: el radar pierde lectura con tantos ejes, y el detalle queda para una mejora posterior.
+
+**Motivo:** seis ejes muestran el perfil del jugador de un vistazo. Un ID inexistente responde con un mensaje de 404 en la pantalla, sin gráfico.
+
+**Cómo se verifica:**
+1. Desde el listado, hacer click en un nombre abre `/players/:id` con el radar.
+2. `/players/999999` muestra "Jugador no encontrado" y no dibuja el gráfico.
+3. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.

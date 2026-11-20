@@ -1,16 +1,44 @@
-<!-- src/app/components/player/player.html -->
-<div class="player-container">
-  <h1>Detalles del Jugador</h1>
-  <p>Selecciona un jugador para ver sus detalles.</p>
-  @if (player) {
-    <div>
-      <h2>{{ player.name }}</h2>
-      <p>Club: {{ player.club }}</p>
-      <p>Posición: {{ player.position }}</p>
-      <p>Nacionalidad: {{ player.nationality }}</p>
-      <p>Rating: {{ player.rating }}</p>
-    </div>
-  } @else {
-    <p>{{ errorMessage || 'Cargando jugador...' }}</p>
+<section class="detail-page">
+  <a class="back" routerLink="/players">← Volver al listado</a>
+
+  @if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  } @else if (loading()) {
+    <p class="state">Cargando jugador…</p>
   }
 
+  @if (player(); as p) {
+    <header class="detail-head">
+      <p class="kicker">[ 03 ] · Detalle</p>
+      <h1>{{ p.name }}</h1>
+      <p class="meta">{{ p.club }} · {{ p.position }} · {{ p.nationality }}</p>
+    </header>
+
+    <div class="detail-grid">
+      <div class="card">
+        <dl class="facts">
+          <div>
+            <dt>Rating</dt>
+            <dd>{{ p.rating }}</dd>
+          </div>
+          <div>
+            <dt>Potencial</dt>
+            <dd>{{ p.potential }}</dd>
+          </div>
+          <div>
+            <dt>Edad</dt>
+            <dd>{{ p.age }}</dd>
+          </div>
+          <div>
+            <dt>Edición</dt>
+            <dd>{{ p.fifaVersion > 0 ? 'FIFA ' + p.fifaVersion : 'Jugador propio' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="card chart-card">
+        <canvas #radar></canvas>
+      </div>
+    </div>
+  }
+</section>

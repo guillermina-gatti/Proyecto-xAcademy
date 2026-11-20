@@ -80,7 +80,9 @@
         <tbody>
           @for (p of rows(); track p.id) {
             <tr>
-              <td>{{ p.name }}</td>
+              <td>
+                <a class="name-link" [routerLink]="['/players', p.id]">{{ p.name }}</a>
+              </td>
               <td>{{ p.club }}</td>
               <td>{{ p.position }}</td>
               <td>{{ p.nationality }}</td>
