@@ -12,6 +12,12 @@
   margin-bottom: 24px;
 }
 
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .kicker {
   margin: 0 0 8px;
   font: 500 12px var(--mono);
@@ -62,6 +68,11 @@ h1 {
   color: var(--accent-ink);
   font: 600 13px var(--sans);
   cursor: pointer;
+}
+
+a.btn-small {
+  display: inline-block;
+  text-decoration: none;
 }
 
 .btn-outline {

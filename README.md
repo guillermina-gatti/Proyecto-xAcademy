@@ -474,3 +474,17 @@ Nota: el `down` de la migración base borra la tabla y sus datos. Revertirla no 
 1. Desde el listado, hacer click en un nombre abre `/players/:id` con el radar.
 2. `/players/999999` muestra "Jugador no encontrado" y no dibuja el gráfico.
 3. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.
+
+### Formularios de alta y edición
+
+**Decisión:** `/players/new` crea un jugador y `/players/:id/edit` lo edita, con reactive forms. Las validaciones del cliente replican las del backend: nombre y posición obligatorios con largo máximo, rating obligatorio y skills enteros entre 0 y 99. El formulario no envía datos inválidos, y los errores 400 del backend se muestran sobre el formulario.
+
+**Alternativas consideradas:** un solo formulario sin validación en el cliente, dejando que el backend responda 400. Descartado: el usuario tendría que enviar y corregir a ciegas. Un `PUT` con reemplazo completo: descartado porque el backend usa PATCH para edición parcial.
+
+**Motivo:** el alta y la edición comparten el mismo componente, y la diferencia es solo la presencia del `id` en la ruta. El género se elige al crear y no se edita, igual que en la API.
+
+**Cómo se verifica:**
+1. Enviar el formulario de alta vacío no hace ninguna petición y muestra los mensajes de campo.
+2. Crear un jugador lo muestra en el listado y navega a su detalle.
+3. Editar un jugador cambia los valores en el detalle.
+4. `npm test -- --watch=false --browsers=ChromeHeadless` pasa desde `football-api/frontend`.

@@ -4,14 +4,17 @@
       <p class="kicker">[ 02 ] · Listado</p>
       <h1>Jugadores</h1>
     </div>
-    <button
-      type="button"
-      class="btn-outline"
-      [disabled]="downloading()"
-      (click)="downloadCsv()"
-    >
-      {{ downloading() ? 'Preparando…' : 'Descargar CSV' }}
-    </button>
+    <div class="head-actions">
+      <a class="btn-small" routerLink="/players/new">Nuevo jugador</a>
+      <button
+        type="button"
+        class="btn-outline"
+        [disabled]="downloading()"
+        (click)="downloadCsv()"
+      >
+        {{ downloading() ? 'Preparando…' : 'Descargar CSV' }}
+      </button>
+    </div>
   </header>
 
   <form class="card filters" [formGroup]="form" (ngSubmit)="applyFilters()">

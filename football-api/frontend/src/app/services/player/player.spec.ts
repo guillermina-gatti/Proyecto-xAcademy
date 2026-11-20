@@ -63,4 +63,21 @@ describe('PlayerService', () => {
     expect(req.request.method).toBe('GET');
     req.flush({});
   });
+
+  it('crea un jugador con POST', () => {
+    service.createPlayer({ name: 'X', position: 'CM', rating: 70 }).subscribe();
+
+    const req = ctrl.expectOne(`${api}/api/players`);
+    expect(req.request.method).toBe('POST');
+    req.flush({});
+  });
+
+  it('edita un jugador con PATCH', () => {
+    service.updatePlayer(3, { name: 'X', position: 'CM', rating: 80 }).subscribe();
+
+    const req = ctrl.expectOne(`${api}/api/players/3`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ name: 'X', position: 'CM', rating: 80 });
+    req.flush({});
+  });
 });

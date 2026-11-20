@@ -12,6 +12,7 @@
       <p class="kicker">[ 03 ] · Detalle</p>
       <h1>{{ p.name }}</h1>
       <p class="meta">{{ p.club }} · {{ p.position }} · {{ p.nationality }}</p>
+      <a class="edit-link" [routerLink]="['/players', p.id, 'edit']">Editar jugador</a>
     </header>
 
     <div class="detail-grid">

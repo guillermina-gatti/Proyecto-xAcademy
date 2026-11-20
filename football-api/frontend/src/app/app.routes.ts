@@ -15,6 +15,23 @@ export const routes: Routes = [
         (m) => m.PlayerListComponent,
       ),
   },
+  // "new" tiene que ir antes de ":id", si no Angular lo toma como id.
+  {
+    path: 'players/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/player-form/player-form').then(
+        (m) => m.PlayerFormComponent,
+      ),
+  },
+  {
+    path: 'players/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/player-form/player-form').then(
+        (m) => m.PlayerFormComponent,
+      ),
+  },
   {
     path: 'players/:id',
     canActivate: [authGuard],

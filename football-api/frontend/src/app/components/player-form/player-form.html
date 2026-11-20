@@ -1,0 +1,89 @@
+﻿<section class="form-page">
+  <a class="back" [routerLink]="isEdit ? ['/players', playerId] : ['/players']">
+    ← {{ isEdit ? 'Volver al detalle' : 'Volver al listado' }}
+  </a>
+  <p class="kicker">[ 04 ] · {{ isEdit ? 'Edición' : 'Alta' }}</p>
+  <h1>{{ isEdit ? 'Editar jugador' : 'Nuevo jugador' }}</h1>
+  @if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  }
+  @if (loading()) {
+    <p class="state">Cargando jugador…</p>
+  } @else {
+    <form class="card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="grid">
+        <label class="field">
+          <span>Nombre *</span>
+          <input type="text" formControlName="name" />
+          @if (showError('name', 'required')) {
+            <small class="error">El nombre es obligatorio.</small>
+          }
+          @if (showError('name', 'maxlength')) {
+            <small class="error">Máximo 100 caracteres.</small>
+          }
+        </label>
+        <label class="field">
+          <span>Posición *</span>
+          <input type="text" formControlName="position" />
+          @if (showError('position', 'required')) {
+            <small class="error">La posición es obligatoria.</small>
+          }
+          @if (showError('position', 'maxlength')) {
+            <small class="error">Máximo 50 caracteres.</small>
+          }
+        </label>
+        <label class="field">
+          <span>Club</span>
+          <input type="text" formControlName="club" />
+          @if (showError('club', 'maxlength')) {
+            <small class="error">Máximo 100 caracteres.</small>
+          }
+        </label>
+        <label class="field">
+          <span>Nacionalidad</span>
+          <input type="text" formControlName="nationality" />
+          @if (showError('nationality', 'maxlength')) {
+            <small class="error">Máximo 100 caracteres.</small>
+          }
+        </label>
+        <label class="field">
+          <span>Rating *</span>
+          <input type="number" formControlName="rating" min="0" max="99" />
+          @if (showError('rating', 'required')) {
+            <small class="error">El rating es obligatorio.</small>
+          }
+          @if (showError('rating', 'range')) {
+            <small class="error">Entero entre 0 y 99.</small>
+          }
+        </label>
+        @if (!isEdit) {
+          <label class="field">
+            <span>Género</span>
+            <select formControlName="gender">
+              @for (g of genders; track g.value) {
+                <option [value]="g.value">{{ g.label }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
+      <h2 class="section">Skills</h2>
+      <div class="grid">
+        @for (s of skillFields; track s.key) {
+          <label class="field">
+            <span>{{ s.label }}</span>
+            <input type="number" [formControlName]="s.key" min="0" max="99" />
+            @if (showError(s.key, 'range')) {
+              <small class="error">Entero entre 0 y 99.</small>
+            }
+          </label>
+        }
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn-small" [disabled]="submitting()">
+          {{ submitting() ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Crear jugador' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

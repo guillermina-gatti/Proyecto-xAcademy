@@ -24,6 +24,22 @@ export interface Player {
 
 export type PlayerGender = 'male' | 'female' | 'not_specified';
 
+// Cuerpo de alta y edición. En edición, club y nationality aceptan null para borrar el valor.
+export interface PlayerInput {
+  name: string;
+  position: string;
+  rating: number;
+  club?: string | null;
+  nationality?: string | null;
+  gender?: PlayerGender;
+  speed?: number;
+  shooting?: number;
+  passing?: number;
+  dribbling?: number;
+  defending?: number;
+  physic?: number;
+}
+
 export interface PlayerSearchFilters {
   name?: string;
   club?: string;
@@ -63,6 +79,14 @@ export class PlayerService {
 
   getPlayer(id: number): Observable<Player> {
     return this.http.get<Player>(`${this.baseUrl}/${id}`);
+  }
+
+  createPlayer(input: PlayerInput): Observable<Player> {
+    return this.http.post<Player>(this.baseUrl, input);
+  }
+
+  updatePlayer(id: number, input: PlayerInput): Observable<Player> {
+    return this.http.patch<Player>(`${this.baseUrl}/${id}`, input);
   }
 
   list(
