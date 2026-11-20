@@ -1,0 +1,123 @@
+<section class="list-page">
+  <header class="list-head">
+    <div>
+      <p class="kicker">[ 02 ] · Listado</p>
+      <h1>Jugadores</h1>
+    </div>
+    <div class="head-actions">
+      <a class="btn-small" routerLink="/players/new">Nuevo jugador</a>
+      <button
+        type="button"
+        class="btn-outline"
+        [disabled]="downloading()"
+        (click)="downloadCsv()"
+      >
+        {{ downloading() ? 'Preparando…' : 'Descargar CSV' }}
+      </button>
+    </div>
+  </header>
+
+  <form class="card filters" [formGroup]="form" (ngSubmit)="applyFilters()">
+    <label class="field">
+      <span>Nombre</span>
+      <input type="text" formControlName="name" />
+    </label>
+    <label class="field">
+      <span>Club</span>
+      <input type="text" formControlName="club" />
+    </label>
+    <label class="field">
+      <span>Posición</span>
+      <input type="text" formControlName="position" />
+    </label>
+    <label class="field">
+      <span>Nacionalidad</span>
+      <input type="text" formControlName="nationality" />
+    </label>
+    <label class="field">
+      <span>Género</span>
+      <select formControlName="gender">
+        @for (g of genders; track g.value) {
+          <option [value]="g.value">{{ g.label }}</option>
+        }
+      </select>
+    </label>
+    <label class="field">
+      <span>Versión</span>
+      <select formControlName="fifaVersion">
+        <option value="">Todas</option>
+        @for (v of versions; track v) {
+          <option [value]="v">FIFA {{ v }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn-small">Filtrar</button>
+      <button type="button" class="link-btn" (click)="clearFilters()">
+        Limpiar
+      </button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <div class="alert" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <p class="state">Cargando jugadores…</p>
+  } @else if (!errorMessage() && rows().length === 0) {
+    <p class="state">No hay jugadores con esos filtros.</p>
+  } @else if (rows().length > 0) {
+    <div class="card table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Club</th>
+            <th>Posición</th>
+            <th>Nacionalidad</th>
+            <th class="num">Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of rows(); track p.id) {
+            <tr>
+              <td>
+                <a class="name-link" [routerLink]="['/players', p.id]">{{ p.name }}</a>
+              </td>
+              <td>{{ p.club }}</td>
+              <td>{{ p.position }}</td>
+              <td>{{ p.nationality }}</td>
+              <td class="num">{{ p.rating }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta(); as m) {
+      <nav class="pager">
+        <button
+          type="button"
+          class="btn-outline"
+          [disabled]="m.page <= 1"
+          (click)="goToPage(m.page - 1)"
+        >
+          Anterior
+        </button>
+        <span>
+          Página {{ m.page }} de {{ m.totalPages }} · {{ m.total }} jugadores
+        </span>
+        <button
+          type="button"
+          class="btn-outline"
+          [disabled]="m.page >= m.totalPages"
+          (click)="goToPage(m.page + 1)"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  }
+</section>

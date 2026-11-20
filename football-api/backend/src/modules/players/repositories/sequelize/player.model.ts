@@ -19,8 +19,17 @@ export class PlayerModel extends Model<PlayerModel> {
   @Column(DataType.INTEGER)
   declare id: number;
 
-  @Column({ field: 'fifa_version', type: DataType.STRING })
-  declare fifaVersion: string;
+  @Column({ field: 'fifa_version', type: DataType.INTEGER })
+  declare fifaVersion: number;
+
+  @Column({ field: 'fifa_player_id', type: DataType.INTEGER })
+  declare fifaPlayerId: number;
+
+  @Column({
+    type: DataType.ENUM('male', 'female', 'not_specified'),
+    defaultValue: 'male',
+  })
+  declare gender: 'male' | 'female' | 'not_specified';
 
   @Column({ field: 'fifa_update', type: DataType.STRING })
   declare fifaUpdate: string;
@@ -35,10 +44,10 @@ export class PlayerModel extends Model<PlayerModel> {
   declare playerPositions: string;
 
   @Column({ field: 'club_name', type: DataType.STRING, allowNull: true })
-  declare clubName?: string;
+  declare clubName: string | null;
 
   @Column({ field: 'nationality_name', type: DataType.STRING, allowNull: true })
-  declare nationalityName?: string;
+  declare nationalityName: string | null;
 
   @Column(DataType.INTEGER)
   declare overall: number;
@@ -329,4 +338,3 @@ export class PlayerModel extends Model<PlayerModel> {
   @Column({ field: 'player_traits', type: DataType.STRING, allowNull: true })
   declare playerTraits?: string;
 }
-

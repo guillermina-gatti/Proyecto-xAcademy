@@ -1,1 +1,110 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --ink: #1c1c22;
+    --ink-soft: #66666f;
+    --line: #dcdad2;
+    --accent: #86d99a;
+    --accent-ink: #163a1f;
+    --accent-pink: #f9c9de;
+    --danger: #b42318;
+    --danger-bg: #fdecea;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --serif: Georgia, 'Times New Roman', serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 var(--sans);
+}
+
+h1,
+h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.field>span {
+    font: 500 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+}
+
+input {
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--ink);
+}
+
+input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 12px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: 600 14px var(--sans);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.alert {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #f5c2bd;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font: 13px var(--mono);
+}
+
+.error {
+    color: var(--danger);
+    font-size: 12px;
+}
+
+.hint {
+    margin: 12px 0 0;
+    color: var(--ink-soft);
+    font-size: 12px;
+}
